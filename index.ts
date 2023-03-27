@@ -1,18 +1,28 @@
 import * as fs from "fs";
 import express from "express";
-//@ts-ignore
-import expressStreamVideo from "express-stream-video";
 import path from "path";
-
 import https from "https";
-
 import cors from "cors";
+import * as pks from "./package.json";
 
 const app = express();
 
 app.use(cors({ origin: "*" }));
 
-app.get("/video/:fileName", function (req, res) {
+const routes = [{ "/": "Server Info", "/videos": "List of avalible videos", "/videos/:fileName": "The video output" }];
+
+app.get("/", function (req, res) {
+	res.json({ version: pks.version, author: pks.author, routes });
+});
+
+app.get("/videos", function (req, res) {
+	const dirPath = path.join(__dirname, "/videos/");
+	const files = fs.readdirSync(dirPath);
+
+	res.json({ files });
+});
+
+app.get("/videos/:fileName", function (req, res) {
 	const filePath = path.join(__dirname, "/videos/" + req.params.fileName);
 
 	const stat = fs.statSync(filePath);
@@ -51,8 +61,7 @@ app.get("/video/:fileName", function (req, res) {
 	}
 });
 
-
-app.listen(3000)
+app.listen(80);
 
 // const httpsServer = https.createServer(
 // 	{
