@@ -31,9 +31,9 @@ app.get("/videos", function (req, res) {
 		};
 	});
 
-	const totalSize = data.reduce((acc, curr) => acc + curr.size, 0) / (1024 * 1024);
+	const totalSize = data.reduce((acc, curr) => acc + curr.size, 0) / 1e6;
 
-	res.json({ files: data, totalSize: Number(totalSize.toFixed(2)) });
+	res.json({ files: data, totalSize: totalSize.toFixed(2) + "MB" });
 });
 
 app.get("/videos/:fileName", function (req, res) {
