@@ -4,6 +4,7 @@ import path from "path";
 import https from "https";
 import cors from "cors";
 import * as pks from "./package.json";
+const serverUrl = "https://server.wolflandrp.xyz/";
 
 const app = express();
 
@@ -19,10 +20,25 @@ app.get("/videos", function (req, res) {
 	const dirPath = path.join(__dirname, "/videos/");
 	const files = fs.readdirSync(dirPath);
 
-	res.json({ files });
+	const data = files.map((file) => {
+		const filePath = dirPath + file;
+		const fileStats = fs.statSync(filePath);
+
+		return {
+			name: file,
+			size: fileStats.size,
+			url: serverUrl + encodeURIComponent(`/videos/${file}`),
+		};
+	});
+
+	const totalSize = data.reduce((acc, curr) => acc + curr.size, 0) / (1024 * 1024);
+
+	res.json({ files: data, totalSize: Number(totalSize.toFixed(2)) });
 });
 
 app.get("/videos/:fileName", function (req, res) {
+	const CHUNK_SIZE = 12 ** 6; // 2.985984MB
+
 	const filePath = path.join(__dirname, "/videos/" + req.params.fileName);
 
 	const stat = fs.statSync(filePath);
@@ -30,28 +46,27 @@ app.get("/videos/:fileName", function (req, res) {
 	const range = req.headers.range;
 
 	if (range) {
-		const parts = range.replace(/bytes=/, "").split("-");
-		const start = parseInt(parts[0], 1);
-		const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+		const start = Number(range.replace(/\D/g, ""));
+		const end = Math.min(start + CHUNK_SIZE, fileSize - 1);
+		const contentLength = end - start + 1;
 
 		if (start >= fileSize) {
 			res.status(416).send("Requested range not satisfiable\n" + start + " >= " + fileSize);
 			return;
 		}
 
-		const chunksize = end - start + 1;
-		const file = fs.createReadStream(filePath, { start, end });
+		const videoStream = fs.createReadStream(filePath, { start, end });
+
 		const head = {
 			"Content-Range": `bytes ${start}-${end}/${fileSize}`,
 			"Accept-Ranges": "bytes",
-			"Content-Length": chunksize,
+			"Content-Length": contentLength,
 			"Content-Type": "video/mp4",
 		};
 
 		res.writeHead(206, head);
-		file.pipe(res);
+		videoStream.pipe(res);
 	} else {
-		console.log(req.headers);
 		const head = {
 			"Content-Length": fileSize,
 			"Content-Type": "video/mp4",
@@ -59,6 +74,8 @@ app.get("/videos/:fileName", function (req, res) {
 		res.writeHead(200, head);
 		fs.createReadStream(filePath).pipe(res);
 	}
+
+	console.log(req.headers);
 });
 
 app.listen(80);
