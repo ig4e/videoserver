@@ -27,7 +27,7 @@ app.get("/videos", function (req, res) {
 		return {
 			name: file,
 			size: fileStats.size,
-			url: serverUrl + encodeURIComponent(`/videos/${file}`),
+			url: serverUrl + "/videos/" + encodeURIComponent(`${file}`),
 		};
 	});
 
