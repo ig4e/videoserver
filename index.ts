@@ -4,7 +4,8 @@ import path from "path";
 import https from "https";
 import cors from "cors";
 import * as pks from "./package.json";
-const serverUrl = "https://server.wolflandrp.xyz";
+//const serverUrl = "https://server.wolflandrp.xyz";
+const serverUrl = "http://localhost";
 
 const app = express();
 
@@ -67,18 +68,15 @@ app.get("/videos/:fileName", function (req, res) {
 		res.writeHead(206, head);
 		videoStream.pipe(res);
 	} else {
-		const head = {
-			"Content-Length": fileSize,
-			"Content-Type": "video/mp4",
-		};
-		res.writeHead(200, head);
-		fs.createReadStream(filePath).pipe(res);
+		res.status(400).send("Requires Range header");
 	}
 
 	console.log(req.headers);
 });
 
-app.listen(80);
+app.listen(80, () => {
+	console.log("HTTP Server running on port 80");
+});
 
 // const httpsServer = https.createServer(
 // 	{
