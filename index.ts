@@ -4,7 +4,7 @@ import path from "path";
 import https from "https";
 import cors from "cors";
 import * as pks from "./package.json";
-const serverUrl = "https://server.wolflandrp.xyz/";
+const serverUrl = "https://server.wolflandrp.xyz";
 
 const app = express();
 
